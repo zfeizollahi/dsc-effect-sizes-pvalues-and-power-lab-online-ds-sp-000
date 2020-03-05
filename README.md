@@ -1,4 +1,3 @@
-
 # Effect Size, P-Values and Power - Lab
 
 ## Introduction 
@@ -25,6 +24,7 @@ To start, import the functions stored in the `flatiron_stats.py` file. It contai
 ```python
 # Your code here; import the contents from flatiron_stats.py
 # You may also wish to open up flatiron_stats.py in a text editor to preview its contents 
+import flatiron_stats as fstats
 ```
 
 ## Generate random samples
@@ -44,6 +44,8 @@ Before you start running simulations, it will be useful to have a helper functio
 import numpy as np
 def generate_samples(m1, s1, n1, m2, s2, n2):
     # Your code here; have the function create two random samples using the input parameters
+    sample1 = np.random.normal(m1, s1, n1)
+    sample2 = np.random.normal(m2, s2, n2)
     return sample1, sample2
 ```
 
@@ -63,10 +65,23 @@ sns.set_style('darkgrid')
 
 ```python
 # Your code here
-
+effect_sizes = [0, 0.01, 0.1, 0.2, 0.5, 1, 2]
+sample_sizes = range(5, 750, 10)
+power_analysis = pd.DataFrame(index=sample_sizes, columns=effect_sizes)
 # Pseudo code outline
-# for effect size:
-#     for sample_size:
+for effect_size in effect_sizes:
+     for size in sample_sizes:
+            data = np.empty([100, size, 2])
+            data[:,:,0] = np.random.normal(5, 1, size=[100, size])
+            data[:,:,1] = np.random.normal(5 + effect_size, 1, size=[100, size])
+            pvals = []
+            for sim in range(len(data)):
+                p = fstats.p_value_welch_ttest(data[sim,:,0], data[sim,:,1])
+                pvals.append(p)
+            pvals_a = np.array(pvals)
+            power = np.sum(pvals_a < 0.05) / len(pvals)
+            power_analysis.at[size, effect_size] = power
+
 #         perform 100 simulations
 #         calculate power
 #         store effect_size, sample_size, power for simulations
@@ -77,7 +92,16 @@ Now that you've simulated the data, go ahead and graph it! Label the x-axis samp
 
 ```python
 # Your code here
+power_analysis.plot(figsize=(10,6))
+plt.title('Power vs Sample Size for Varying Effect sizes')
+plt.xlabel('Sample Size')
+plt.ylabel('Power')
+plt.legend(title='Effect Size', loc=(1, 0.5));
 ```
+
+
+![png](index_files/index_10_0.png)
+
 
 As you can see, it's also typically incredibly difficult (if not impossible) to accurately detect effect sizes below 0.1!
 
